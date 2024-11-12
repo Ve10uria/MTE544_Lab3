@@ -10,17 +10,17 @@ class kalman_filter:
     # TODO Part 3: Initialize the covariances and the states    
     def __init__(self, P,Q,R, x, dt):
         
-        self.P=P
-        self.Q=Q
-        self.R=R
-        self.x=x
-        self.dt =dt
+        self.P=P # State covariance matrix
+        self.Q=Q # Process noise covariance matrix
+        self.R=R # Measurement noise covariance matrix
+        self.x=x # Initial state estimate
+        self.dt =dt # Time step
         
     # TODO Part 3: Replace the matrices with Jacobians where needed        
     def predict(self):
 
-        self.A = self.jacobian_A() # motion model
-        self.C = self.jacobian_H() # measurement model
+        self.A = self.jacobian_A() # Motion model
+        self.C = self.jacobian_H() # Measurement model
         
         self.motion_model()
         
