@@ -13,7 +13,7 @@ class controller:
     
     
     
-    def __init__(self, klp=0.2, klv=0.2, kli=0.2, kap=0.2, kav=0.2, kai=0.2):
+    def __init__(self, klp=0.5, klv=0.2, kli=1.5, kap=1, kav=0.3, kai=0.6):
         
         self.PID_linear=PID_ctrl(PID, klp, klv, kli, filename_="linear.csv")
         self.PID_angular=PID_ctrl(PID, kap, kav, kai, filename_="angular.csv")
@@ -37,7 +37,7 @@ class controller:
 
 class trajectoryController(controller):
 
-    def __init__(self, klp=0.2, klv=0.2, kli=0.2, kap=0.2, kav=0.2, kai=0.2, lookAhead=1.0, targetVel=1.0):
+    def __init__(self, klp=0.5, klv=0.2, kli=1.5, kap=1, kav=0.3, kai=0.6, lookAhead=1.0, targetVel=1.0):
         super().__init__(klp, klv, kli, kap, kav, kai)
         self.lookAhead=lookAhead
         self.targetVelocity=targetVel

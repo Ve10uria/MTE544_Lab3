@@ -14,7 +14,7 @@ from nav_msgs.msg import Odometry as odom
 from sensor_msgs.msg import Imu
 from kalman_filter import kalman_filter
 
-from rclpy import init, spin, spin_once
+from rclpy import init, spin, spin_once, qos
 
 import numpy as np
 import message_filters
@@ -46,8 +46,7 @@ class localization(Node):
     def initKalmanfilter(self, dt):
         
         # TODO Part 3: Set up the quantities for the EKF (hint: you will need the functions for the states and measurements)
-        x0 = self.getPose()
-        x= [x0[0], x0[1], x0[2], 0, 0]
+        x= [0, 0, 0, 0, 0, 0]
         
         Q= 0.5 * np.array([[1,0,0,0,0,0],
                             [0,1,0,0,0,0],
@@ -65,16 +64,31 @@ class localization(Node):
         P= np.zeros((6,6))
         
         self.kf=kalman_filter(P,Q,R, x, dt)
+
+        TurtleBot = 3
+        if TurtleBot == 3:
+            odom_qos=QoSProfile(
+                reliability = qos.ReliabilityPolicy.RELIABLE,
+                durability = qos.DurabilityPolicy.VOLATILE,
+                history = qos.HistoryPolicy.KEEP_LAST, # terminal output says UNKNOWN, I think we defaulted to this last time
+                depth = 10
+            )
+        else:
+            odom_qos=QoSProfile(
+                reliability = qos.ReliabilityPolicy.BEST_EFFORT,
+                durability = qos.DurabilityPolicy.VOLATILE,
+                history = qos.HistoryPolicy.KEEP_LAST,
+                depth = 10
+            )
         
         # TODO Part 3: Use the odometry and IMU data for the EKF
-        self.odom_sub=message_filters.Subscriber(odom, "/odom")
-        self.imu_sub=message_filters.Subscriber(Imu, "/imu")
+        self.odom_sub=message_filters.Subscriber(self, odom, "/odom", qos_profile=odom_qos)
+        self.imu_sub=message_filters.Subscriber(self, Imu, "/imu")
         
         time_syncher=message_filters.ApproximateTimeSynchronizer([self.odom_sub, self.imu_sub], queue_size=10, slop=0.1)
         time_syncher.registerCallback(self.fusion_callback)
     
     def fusion_callback(self, odom_msg: odom, imu_msg: Imu):
-        
         # TODO Part 3: Use the EKF to perform state estimation
         # Take the measurements
         # your measurements are the linear velocity and angular velocity from odom msg
@@ -95,7 +109,7 @@ class localization(Node):
         xhat=self.kf.get_states()
 
         # Update the pose estimate to be returned by getPose
-        self.pose=np.array([xhat[0], xhat[1], xhat[2]])
+        self.pose=np.array([xhat[0], xhat[1], xhat[2], odom_msg.header.stamp])
 
         # "imu_ax", "imu_ay", "kf_ax", "kf_ay",
         # "kf_vx","kf_w","kf_x", "kf_y","stamp"
