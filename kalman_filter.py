@@ -68,11 +68,11 @@ class kalman_filter:
     def jacobian_A(self):
         x, y, th, w, v, vdot = self.x
         dt = self.dt
-        
+
         return np.array([
             #x, y,               th, w,             v, vdot
-            [1, 0,              ..., 0,          ...,  0],
-            [0, 1,              ..., 0,          ...,  0],
+            [1, 0,  -v*np.sin(th)*dt, 0, np.cos(th)*dt,  0], # Derivative of x wrt theta and v
+            [0, 1,   v*np.cos(th)*dt, 0, np.sin(th)*dt,  0], # Derivative of y wrt theta and v
             [0, 0,                1, dt,           0,  0],
             [0, 0,                0, 1,            0,  0],
             [0, 0,                0, 0,            1,  dt],
