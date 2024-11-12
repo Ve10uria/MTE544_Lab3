@@ -56,8 +56,8 @@ class kalman_filter:
         dt = self.dt
         
         self.x = np.array([
-            x + v * np.cos(th) * dt,
-            y + v * np.sin(th) * dt,
+            x + v * np.cos(th) * dt, # Update x position
+            y + v * np.sin(th) * dt, # Update y position
             th + w * dt,
             w,
             v  + vdot*dt,
