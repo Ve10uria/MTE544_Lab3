@@ -10,17 +10,17 @@ class kalman_filter:
     # TODO Part 3: Initialize the covariances and the states    
     def __init__(self, P,Q,R, x, dt):
         
-        self.P=...
-        self.Q=...
-        self.R=...
-        self.x=...
-        self.dt = ...
+        self.P=P
+        self.Q=Q
+        self.R=R
+        self.x=x
+        self.dt =dt
         
     # TODO Part 3: Replace the matrices with Jacobians where needed        
     def predict(self):
 
-        self.A = ...
-        self.C = ...
+        self.A = self.jacobian_A() # motion model
+        self.C = self.jacobian_H() # measurement model
         
         self.motion_model()
         
@@ -43,10 +43,10 @@ class kalman_filter:
     def measurement_model(self):
         x, y, th, w, v, vdot = self.x
         return np.array([
-            ...,# v
-            ...,# w
-            ..., # ax
-            ..., # ay
+            v,# v
+            w,# w
+            vdot * np.cos(th), # ax
+            vdot * np.sin(th), # ay
         ])
         
     # TODO Part 3: Impelment the motion model (state-transition matrice)
@@ -56,8 +56,8 @@ class kalman_filter:
         dt = self.dt
         
         self.x = np.array([
-            x + ... * np.cos(th) * dt,
-            y + ... * np.sin(th) * dt,
+            x + v * np.cos(th) * dt,
+            y + v * np.sin(th) * dt,
             th + w * dt,
             w,
             v  + vdot*dt,
