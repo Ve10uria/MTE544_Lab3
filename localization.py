@@ -23,13 +23,19 @@ rawSensors=0
 kalmanFilter=1
 odom_qos=QoSProfile(reliability=2, durability=2, history=1, depth=10)
 
+motion_type = "point"
+Q_CONST = 0.1
+R_CONST = 0.9
+
 class localization(Node):
     
     def __init__(self, type, dt, loggerName="robotPose.csv", loggerHeaders=["imu_ax", "imu_ay", "kf_ax", "kf_ay","kf_vx","kf_w","kf_x", "kf_y","stamp"]):
 
         super().__init__("localizer")
+        
+        data = f"V2-{motion_type}-Q{Q_CONST}-R{R_CONST}".replace(".", "")
+        self.loc_logger=Logger(f"CSVs/robot_pose-{data}.csv", loggerHeaders)
 
-        self.loc_logger=Logger( loggerName , loggerHeaders)
         self.pose=None
         
         if type==rawSensors:
@@ -48,24 +54,24 @@ class localization(Node):
         # TODO Part 3: Set up the quantities for the EKF (hint: you will need the functions for the states and measurements)
         x= [0, 0, 0, 0, 0, 0]
         
-        Q= 0.5 * np.array([[1,0,0,0,0,0],
+        Q= Q_CONST * np.array([[1,0,0,0,0,0],
                             [0,1,0,0,0,0],
                             [0,0,1,0,0,0],
                             [0,0,0,1,0,0],
                             [0,0,0,0,1,0],
                             [0,0,0,0,0,1]])
 
-        R= 0.5 * np.array([[1,0,0,0],
+        R= R_CONST * np.array([[1,0,0,0],
                             [0,1,0,0],
                             [0,0,1,0],
                             [0,0,0,1],])
         
         # TODO unsure what to set this to initially?
-        P= np.zeros((6,6))
+        P= Q
         
         self.kf=kalman_filter(P,Q,R, x, dt)
 
-        TurtleBot = 3
+        TurtleBot = 4
         if TurtleBot == 3:
             odom_qos=QoSProfile(
                 reliability = qos.ReliabilityPolicy.RELIABLE,
@@ -74,6 +80,7 @@ class localization(Node):
                 depth = 10
             )
         else:
+            print("TB4")
             odom_qos=QoSProfile(
                 reliability = qos.ReliabilityPolicy.BEST_EFFORT,
                 durability = qos.DurabilityPolicy.VOLATILE,
@@ -83,7 +90,7 @@ class localization(Node):
         
         # TODO Part 3: Use the odometry and IMU data for the EKF
         self.odom_sub=message_filters.Subscriber(self, odom, "/odom", qos_profile=odom_qos)
-        self.imu_sub=message_filters.Subscriber(self, Imu, "/imu")
+        self.imu_sub=message_filters.Subscriber(self, Imu, "/imu", qos_profile=odom_qos)
         
         time_syncher=message_filters.ApproximateTimeSynchronizer([self.odom_sub, self.imu_sub], queue_size=10, slop=0.1)
         time_syncher.registerCallback(self.fusion_callback)
@@ -114,18 +121,22 @@ class localization(Node):
         # "imu_ax", "imu_ay", "kf_ax", "kf_ay",
         # "kf_vx","kf_w","kf_x", "kf_y","stamp"
 
+        # x, y, th, w, v, vdot=self.x
+
         # TODO Part 4: log your data
         self.loc_logger.log_values([
                             z[2], 
                             z[3], 
-                            xhat[5]*np.cos(xhat[2]),
-                            xhat[5]*np.sin(xhat[2]),
+                            xhat[5],
+                            xhat[4]*xhat[3],
                             xhat[4]*np.cos(xhat[2]),
                             xhat[3],
                             xhat[0],
                             xhat[1],
-                            odom_msg.header.stamp
+                            odom_msg.header.stamp.sec + odom_msg.header.stamp.nanosec*1e-9
                             ])
+        
+
       
     def odom_callback(self, pose_msg):
         
