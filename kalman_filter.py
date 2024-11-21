@@ -29,12 +29,15 @@ class kalman_filter:
     # TODO Part 3: Replace the matrices with Jacobians where needed
     def update(self, z):
 
+        # Get Kalman gain
         S=np.dot(np.dot(self.C, self.P), self.C.T) + self.R
             
         kalman_gain=np.dot(np.dot(self.P, self.C.T), np.linalg.inv(S))
         
+        # Calculate measurement error
         surprise_error= z - self.measurement_model()
         
+        # Update prediction using error
         self.x=self.x + np.dot(kalman_gain, surprise_error)
         self.P=np.dot( (np.eye(self.A.shape[0]) - np.dot(kalman_gain, self.C)) , self.P)
         
@@ -58,10 +61,10 @@ class kalman_filter:
         self.x = np.array([
             x + v * np.cos(th) * dt, # Update x position
             y + v * np.sin(th) * dt, # Update y position
-            th + w * dt,
-            w,
-            v  + vdot*dt,
-            vdot
+            th + w * dt, # Update angle
+            w, # Assume constant angular velocity
+            v  + vdot*dt, # Update linear velocity
+            vdot # Assume constant linear acceleration
         ])
         
 
