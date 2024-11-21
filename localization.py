@@ -52,34 +52,33 @@ class localization(Node):
     def initKalmanfilter(self, dt):
         
         # TODO Part 3: Set up the quantities for the EKF (hint: you will need the functions for the states and measurements)
-        x= [0, 0, 0, 0, 0, 0]
+        x= [0, 0, 0, 0, 0, 0] # Initial state
         
-        Q= Q_CONST * np.array([[1,0,0,0,0,0],
+        Q= Q_CONST * np.array([[1,0,0,0,0,0], # Q array is Q constant multiplied by 6x6 I matrix from state vector x=[x,y,th,w,v,vdot]
                             [0,1,0,0,0,0],
                             [0,0,1,0,0,0],
                             [0,0,0,1,0,0],
                             [0,0,0,0,1,0],
                             [0,0,0,0,0,1]])
 
-        R= R_CONST * np.array([[1,0,0,0],
+        R= R_CONST * np.array([[1,0,0,0], # R array is R constant multiplied by 4x4 I matrix from odometry and IMU z=[v,w,ax,ay]
                             [0,1,0,0],
                             [0,0,1,0],
                             [0,0,0,1],])
         
-        # TODO unsure what to set this to initially?
-        P= Q
+        P = Q # Initially set P equal to Q
         
-        self.kf=kalman_filter(P,Q,R, x, dt)
+        self.kf=kalman_filter(P,Q,R, x, dt) # Initialize Kalman Filter
 
-        TurtleBot = 4
-        if TurtleBot == 3:
+        TurtleBot = 4 # Set TurtleBot type
+        if TurtleBot == 3: # If simulation, set appropriate QoS profile
             odom_qos=QoSProfile(
                 reliability = qos.ReliabilityPolicy.RELIABLE,
                 durability = qos.DurabilityPolicy.VOLATILE,
                 history = qos.HistoryPolicy.KEEP_LAST, # terminal output says UNKNOWN, I think we defaulted to this last time
                 depth = 10
             )
-        else:
+        else: # If physical model, set appropriate QoS profile
             print("TB4")
             odom_qos=QoSProfile(
                 reliability = qos.ReliabilityPolicy.BEST_EFFORT,
@@ -89,8 +88,8 @@ class localization(Node):
             )
         
         # TODO Part 3: Use the odometry and IMU data for the EKF
-        self.odom_sub=message_filters.Subscriber(self, odom, "/odom", qos_profile=odom_qos)
-        self.imu_sub=message_filters.Subscriber(self, Imu, "/imu", qos_profile=odom_qos)
+        self.odom_sub=message_filters.Subscriber(self, odom, "/odom", qos_profile=odom_qos) # Create odometry subscriber
+        self.imu_sub=message_filters.Subscriber(self, Imu, "/imu", qos_profile=odom_qos) # Create IMU subscriber 
         
         time_syncher=message_filters.ApproximateTimeSynchronizer([self.odom_sub, self.imu_sub], queue_size=10, slop=0.1)
         time_syncher.registerCallback(self.fusion_callback)
@@ -102,18 +101,18 @@ class localization(Node):
         # and linear acceleration in x and y from the imu msg
         # the kalman filter should do a proper integration to provide x,y and filter ax,ay
         z=[
-            np.sqrt(odom_msg.twist.twist.linear.x**2 + odom_msg.twist.twist.linear.y**2),
-            odom_msg.twist.twist.angular.z,
-            imu_msg.linear_acceleration.x,
-            imu_msg.linear_acceleration.y,
+            np.sqrt(odom_msg.twist.twist.linear.x**2 + odom_msg.twist.twist.linear.y**2), # v
+            odom_msg.twist.twist.angular.z, # w
+            imu_msg.linear_acceleration.x, #ax
+            imu_msg.linear_acceleration.y, #ay
         ]
         
         # Implement the two steps for estimation
-        self.kf.predict()
-        self.kf.update(z)
+        self.kf.predict() # Prediction step
+        self.kf.update(z) # Correction step
         
         # Get the estimate
-        xhat=self.kf.get_states()
+        xhat=self.kf.get_states() # Get next state estimate 
 
         # Update the pose estimate to be returned by getPose
         self.pose=np.array([xhat[0], xhat[1], xhat[2], odom_msg.header.stamp])
@@ -125,18 +124,16 @@ class localization(Node):
 
         # TODO Part 4: log your data
         self.loc_logger.log_values([
-                            z[2], 
-                            z[3], 
-                            xhat[5],
-                            xhat[4]*xhat[3],
-                            xhat[4]*np.cos(xhat[2]),
-                            xhat[3],
-                            xhat[0],
-                            xhat[1],
-                            odom_msg.header.stamp.sec + odom_msg.header.stamp.nanosec*1e-9
+                            z[2], # ax
+                            z[3], # ay
+                            xhat[5], # EKF ax
+                            xhat[4]*xhat[3], # EKF ay
+                            xhat[4]*np.cos(xhat[2]), # EKF v
+                            xhat[3], # EKF w
+                            xhat[0], # EKF x
+                            xhat[1], # EKF y
+                            odom_msg.header.stamp.sec + odom_msg.header.stamp.nanosec*1e-9 # Time stamp
                             ])
-        
-
       
     def odom_callback(self, pose_msg):
         
