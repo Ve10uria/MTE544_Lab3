@@ -33,15 +33,15 @@ class decision_maker(Node):
 
 
         # TODO Part 3: use the Kalman Filter
-        self.localizer=localization(kalmanFilter, publishing_period)
+        self.localizer=localization(kalmanFilter, publishing_period) # Select EKF as localization method
         
         if motion_type==POINT_PLANNER:
-            self.controller=controller(klp=0.2, klv=0.5, kap=0.8, kav=0.6)      
+            self.controller=controller(klp=0.2, klv=0.5, kap=0.8, kav=0.6) # Lab 2 PID values
             self.planner=planner(POINT_PLANNER)
 
         
         elif motion_type==TRAJECTORY_PLANNER:
-            self.controller=trajectoryController(klp=0.2, klv=0.5, kap=0.8, kav=0.6)      
+            self.controller=trajectoryController(klp=0.2, klv=0.5, kap=0.8, kav=0.6) # Lab 2 PID values     
             self.planner=planner(TRAJECTORY_PLANNER)
         elif motion_type==SPIRAL_4TUNE:
             self.controller=None
