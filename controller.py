@@ -7,13 +7,13 @@ from utilities import euler_from_quaternion, calculate_angular_error, calculate_
 
 M_PI=3.1415926535
 
-P=0; PD=1; PI=2; PID=3
+P=0; PD=1; PI=2; PID=3 # Lab 2 controller constants to quickly set controller type
 
 class controller:
     
     
     
-    def __init__(self, klp=0.5, klv=0.2, kli=1.5, kap=1, kav=0.3, kai=0.6):
+    def __init__(self, klp=0.5, klv=0.2, kli=1.5, kap=1, kav=0.3, kai=0.6): # Lab 2 PID values
         
         self.PID_linear=PID_ctrl(PID, klp, klv, kli, filename_="linear.csv")
         self.PID_angular=PID_ctrl(PID, kap, kav, kai, filename_="angular.csv")
@@ -37,7 +37,7 @@ class controller:
 
 class trajectoryController(controller):
 
-    def __init__(self, klp=0.5, klv=0.2, kli=1.5, kap=1, kav=0.3, kai=0.6, lookAhead=1.0, targetVel=1.0):
+    def __init__(self, klp=0.5, klv=0.2, kli=1.5, kap=1, kav=0.3, kai=0.6, lookAhead=1.0, targetVel=1.0): # Lab 2 PID values
         super().__init__(klp, klv, kli, kap, kav, kai)
         self.lookAhead=lookAhead
         self.targetVelocity=targetVel
